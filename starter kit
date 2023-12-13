@@ -1,0 +1,102 @@
+import pygame
+import random
+
+# Initialize Pygame
+pygame.init()
+
+# Constants
+SCREEN_WIDTH, SCREEN_HEIGHT = 800, 600
+PLAYER_SIZE = 50
+OBSTACLE_SIZE = 50
+HEART_SIZE = 30
+PLAYER_COLOR = (0, 255, 0)
+OBSTACLE_COLOR = (255, 0, 0)
+HEART_COLOR = (0, 255, 255)
+BG_COLOR = (0, 0, 0)
+SPEED = 5
+
+# Set up the screen
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+pygame.display.set_caption("Obstacle Avoidance Game")
+
+# Player
+player_pos = [SCREEN_WIDTH//2, SCREEN_HEIGHT - 2 * PLAYER_SIZE]
+player_life = 3
+
+# Obstacles
+obstacles = []
+spawn_obstacle_timer = 20
+
+# Hearts
+hearts = []
+spawn_heart_timer = 50
+
+clock = pygame.time.Clock()
+
+game_over = False
+
+# Game loop
+while not game_over:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            game_over = True
+
+    keys = pygame.key.get_pressed()
+
+    # Player movement
+    if keys[pygame.K_LEFT] and player_pos[0] > 0:
+        player_pos[0] -= SPEED
+    if keys[pygame.K_RIGHT] and player_pos[0] < SCREEN_WIDTH - PLAYER_SIZE:
+        player_pos[0] += SPEED
+
+    # Update obstacle positions
+    if spawn_obstacle_timer <= 0:
+        obstacles.append([random.randint(0, SCREEN_WIDTH - OBSTACLE_SIZE), 0])
+        spawn_obstacle_timer = 20
+    else:
+        spawn_obstacle_timer -= 1
+
+    for obstacle in obstacles:
+        obstacle[1] += SPEED
+        if obstacle[1] > SCREEN_HEIGHT:
+            obstacles.remove(obstacle)
+
+    # Update heart positions
+    if spawn_heart_timer <= 0:
+        hearts.append([random.randint(0, SCREEN_WIDTH - HEART_SIZE), 0])
+        spawn_heart_timer = 50
+    else:
+        spawn_heart_timer -= 1
+
+    for heart in hearts:
+        heart[1] += SPEED
+        if heart[1] > SCREEN_HEIGHT:
+            hearts.remove(heart)
+
+    # Check for collisions
+    player_rect = pygame.Rect(player_pos[0], player_pos[1], PLAYER_SIZE, PLAYER_SIZE)
+    for obstacle in obstacles:
+        if player_rect.colliderect(pygame.Rect(obstacle[0], obstacle[1], OBSTACLE_SIZE, OBSTACLE_SIZE)):
+            player_life -= 1
+            obstacles.remove(obstacle)
+            if player_life <= 0:
+                game_over = True
+
+    for heart in hearts:
+        if player_rect.colliderect(pygame.Rect(heart[0], heart[1], HEART_SIZE, HEART_SIZE)):
+            player_life += 1
+            hearts.remove(heart)
+
+    # Draw everything
+    screen.fill(BG_COLOR)
+    pygame.draw.rect(screen, PLAYER_COLOR, (player_pos[0], player_pos[1], PLAYER_SIZE, PLAYER_SIZE))
+    for obstacle in obstacles:
+        pygame.draw.rect(screen, OBSTACLE_COLOR, (obstacle[0], obstacle[1], OBSTACLE_SIZE, OBSTACLE_SIZE))
+    for heart in hearts:
+        pygame.draw.rect(screen, HEART_COLOR, (heart[0], heart[1], HEART_SIZE, HEART_SIZE))
+
+    # Update screen
+    pygame.display.flip()
+    clock.tick(30)
+
+pygame.quit()
